@@ -52,14 +52,40 @@ extra-doc-files:    CHANGELOG.md
 -- extra-source-files:
 
 common warnings
-    ghc-options: -Wall
+    ghc-options:
+      -Werror
+      -Weverything
+      -Wno-implicit-prelude
+      -Wno-all-missed-specialisations
+      -Wno-missed-specialisations
+      -Wno-missing-export-lists
+      -Wno-missing-exported-signatures
+      -Wno-missing-import-lists
+      -Wno-missing-kind-signatures
+      -Wno-missing-local-signatures
+      -Wno-missing-safe-haskell-mode
+      -Wno-monomorphism-restriction
+      -Wno-prepositive-qualified-module
+      -Wno-safe
+      -Wno-unsafe
+      -Wno-unused-packages
+      -fhide-source-paths
+      -freverse-errors
+      -hiedir=.hie -fwrite-ide-info
+    default-extensions:
+      DerivingStrategies
+      LambdaCase
+      BlockArguments
+      NoFieldSelectors
+      DuplicateRecordFields
+      OverloadedStrings
 
 library
     -- Import common warning flags.
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  MyLib
+    exposed-modules:  Law.Core, Law.Expr, MyLib
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -68,7 +94,19 @@ library
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base
+    build-depends:    base,
+                      containers,
+                      lens,
+                      generic-lens,
+                      universe-base,
+                      text,
+                      relude,
+                      megaparsec,
+                      prettyprinter
+
+    mixins:           base hiding (Prelude),
+                      relude (Relude as Prelude),
+                      relude
 
     -- Directories containing source files.
     hs-source-dirs:   src
