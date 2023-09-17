@@ -51,7 +51,7 @@ The system will infer as much as possible:
 
 ## Limits and Colimits
 
-Limits and colimits are defined using quivers too. If we want to define a sub of two objects `A` and `B`, we can use the quiver:
+Limits and colimits are defined using quivers too. If we want to define a sum of two objects `A` and `B`, we can use the quiver:
 ```
 (a, b)
 ```
@@ -192,3 +192,10 @@ this recursion works outs, so that we can just get `C[f] -> C`. We can then, for
 any `f`, use this to get an arrow in `C`.
 
 
+
+----
+
+
+AGAIN:
+
+actually you just do a recursive sketch with both `f` and `mf` (standing for `map(f)`), and then you initialise it with the `f` you want.
