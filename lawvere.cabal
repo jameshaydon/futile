@@ -74,18 +74,20 @@ common warnings
       -hiedir=.hie -fwrite-ide-info
     default-extensions:
       DerivingStrategies
+      DerivingVia
       LambdaCase
       BlockArguments
       NoFieldSelectors
       DuplicateRecordFields
       OverloadedStrings
+      MultiWayIf
 
 library
     -- Import common warning flags.
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  Law.Core, Law.Expr, MyLib
+    exposed-modules:  Law.Core, Law.Expr, Law.Equality, MyLib
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -98,11 +100,15 @@ library
                       containers,
                       lens,
                       generic-lens,
+                      generic-data,
                       universe-base,
                       text,
                       relude,
                       megaparsec,
-                      prettyprinter
+                      prettyprinter,
+                      hegg,
+                      data-fix,
+                      free
 
     mixins:           base hiding (Prelude),
                       relude (Relude as Prelude),

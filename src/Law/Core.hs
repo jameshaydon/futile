@@ -7,3 +7,6 @@ data Sign = Neg | Pos
 
 data Lbl = LblPos Int | LblName Name
   deriving stock (Eq, Ord, Show)
+
+instance IsString Lbl where
+  fromString = LblName . toText
