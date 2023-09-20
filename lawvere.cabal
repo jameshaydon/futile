@@ -81,6 +81,7 @@ common warnings
       DuplicateRecordFields
       OverloadedStrings
       MultiWayIf
+      ViewPatterns
 
 library
     -- Import common warning flags.
@@ -108,7 +109,8 @@ library
                       prettyprinter,
                       hegg,
                       data-fix,
-                      free
+                      free,
+                      pretty-simple
 
     mixins:           base hiding (Prelude),
                       relude (Relude as Prelude),

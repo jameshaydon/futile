@@ -4,17 +4,20 @@ module Law.Equality where
 import Control.Lens
 import Data.Set qualified as Set
 
-onOne :: (Plated t) => (t -> [t]) -> t -> [t]
-onOne rw x = [replace sub' | Context replace sub <- contexts x, sub' <- rw sub]
+class Normalize t where
+  norm :: t -> t
 
-satOnce :: (Plated t, Ord t) => (t -> [t]) -> Set t -> Set t
+onOne :: (Plated t, Normalize t) => (t -> [t]) -> t -> [t]
+onOne rw x = x : [norm (replace sub') | Context replace sub <- contexts x, sub' <- rw sub]
+
+satOnce :: (Plated t, Ord t, Normalize t) => (t -> [t]) -> Set t -> Set t
 satOnce rw es = Set.fromList (Set.toList es >>= onOne rw)
 
-satOnce' :: (Plated t, Ord t) => (t -> [t]) -> (Bool, Set t) -> (Bool, Set t)
+satOnce' :: (Plated t, Ord t, Normalize t) => (t -> [t]) -> (Bool, Set t) -> (Bool, Set t)
 satOnce' _ (True, es) = (True, es)
 satOnce' rw (False, es) = let es' = satOnce rw es in (Set.size es == Set.size es', es')
 
-satMany :: (Plated t, Ord t) => Int -> (t -> [t]) -> Set t -> Set t
+satMany :: (Plated t, Ord t, Normalize t) => Int -> (t -> [t]) -> Set t -> Set t
 satMany n _ es | n <= 0 = es
 satMany n rw es =
   let next = satOnce rw es
@@ -25,7 +28,7 @@ satMany n rw es =
 data EqRes = Equal | NonEqual | Unknown
   deriving stock (Eq, Show)
 
-eq :: (Plated t, Ord t) => Int -> (t -> [t]) -> t -> t -> EqRes
+eq :: (Plated t, Ord t, Normalize t) => Int -> (t -> [t]) -> t -> t -> EqRes
 eq _ _ x y | x == y = Equal
 eq n rw x y = go n (False, Set.singleton x) (False, Set.singleton y)
   where

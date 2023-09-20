@@ -26,7 +26,7 @@ When you have a situation like:
 Then this can be re-written to:
 
 ```
-{ lbl = F, ... } @lbl G
+{ lbl = F, ... } G
 ```
 
 ## Proving equality of terms from a coproduct
