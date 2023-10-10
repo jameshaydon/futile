@@ -31,6 +31,19 @@ type Ar = Fix ArF
 instance (Traversable f) => Plated (Fix f) where
   plate f (Fix fx) = Fix <$> traverse f fx
 
+data Ob
+  = ObNamed Name
+  | Lim Sign (Map Lbl Ob)
+
+data Pf = PfAuto
+
+data Def
+  = DefOb Name Ob
+  | DefAr Name Ob Ob Ar
+  | DefPf Name Ob Ob Ar Ar Pf
+
+type Module = [Def]
+
 cost :: ArF Int -> Int
 cost = \case
   Named {} -> 1
@@ -65,10 +78,14 @@ catrw :: Ar -> [Ar]
 catrw e =
   norm
     <$> compPairRW coneComp e
+      ++ compPairRW coconeComp e
       ++ compPairRW coneProj e
+      ++ compPairRW coconeProj e
       ++ compTripRW distrCase e
+      ++ trivialCone
       ++ ( case e of
              Fix (Named "plus") -> [plus]
+             Fix (Named "not") -> [cnot]
              _ -> []
          )
   where
@@ -94,9 +111,17 @@ catrw e =
     coneComp f (Fix (Cone Pos cs)) = [Fix (Cone Pos ((\g -> Fix (Comp [f, g])) <$> cs))]
     coneComp _ _ = []
 
+    coconeComp :: Ar -> Ar -> [Ar]
+    coconeComp (Fix (Cone Neg cs)) f = [Fix (Cone Neg ((\g -> Fix (Comp [g, f])) <$> cs))]
+    coconeComp _ _ = []
+
     coneProj :: Ar -> Ar -> [Ar]
     coneProj (Fix (Cone Pos cs)) (Fix (Proj Pos lbl)) = maybe [] pure (Map.lookup lbl cs)
     coneProj _ _ = []
+
+    coconeProj :: Ar -> Ar -> [Ar]
+    coconeProj (Fix (Proj Neg lbl)) (Fix (Cone Neg cs)) = maybe [] pure (Map.lookup lbl cs)
+    coconeProj _ _ = []
 
     distrCase :: Ar -> Ar -> Ar -> [Ar]
     distrCase (Fix (Cone Pos cs)) (Fix (Distr lbl)) (Fix (Cone Neg cases)) = case Map.lookup lbl cs of
@@ -112,7 +137,7 @@ catrw e =
                     ]
                 )
             ]
-        Fix (Comp fs) -> case splitLast fs of -- TODO: use more efficient function
+        Fix (Comp fs) -> case splitLast fs of
           Just (before, Fix (Proj Neg con)) -> case Map.lookup con cases of
             Nothing -> []
             Just theCase ->
@@ -126,6 +151,20 @@ catrw e =
           _ -> []
         _ -> []
     distrCase _ _ _ = []
+
+    trivialCone =
+      case e of
+        Fix (Cone polarity cs)
+          | getAll
+              ( Map.foldMapWithKey
+                  ( \lbl f -> case f of
+                      Fix (Proj polarity' lbl') | polarity == polarity' -> All (lbl == lbl')
+                      _ -> All False
+                  )
+                  cs
+              ) ->
+              [Fix (Comp [])]
+        _ -> []
 
 doubles :: [a] -> [([a], (a, a), [a])]
 doubles (x : y : rest) = ([], (x, y), rest) : [(x : a, b, c) | (a, b, c) <- doubles (y : rest)]
@@ -142,23 +181,25 @@ splitLast (x : rest) = do
   (prefix, y) <- splitLast rest
   pure (x : prefix, y)
 
-example :: Ar
-example =
-  comp
-    (cone [("x", cid), ("y", exampleComp)])
-    (proj "x")
+checkEq :: Ar -> Ar -> EqRes
+checkEq a b = eq 14 catrw (norm a) (norm b)
 
-exampleComp :: Ar
-exampleComp =
-  comp
-    (comp (named "f") (named "g"))
-    (named "h")
+expand :: Int -> Ar -> [Ar]
+expand n = Set.toList . satMany n catrw . Set.singleton . norm
 
-exampleComp' :: Ar
-exampleComp' =
-  comp
-    (comp (named "f") (comp (named "g") cid))
-    (named "h")
+cnot :: Ar
+cnot =
+  cocone
+    [ ("true", coproj "false"),
+      ("false", coproj "true")
+    ]
+
+notnot :: Ar
+notnot = comp cnot cnot
+
+notInvolution :: EqRes
+notInvolution =
+  eq 12 catrw notnot cid
 
 plusAssoc :: EqRes
 plusAssoc = eq 12 catrw ff gg
@@ -175,15 +216,9 @@ zeroPlusZero =
       ]
     .+ named "plus"
 
-checkEq :: Ar -> Ar -> EqRes
-checkEq a b = eq 14 catrw (norm a) (norm b)
-
 zeroRightNeutralBase :: EqRes
 zeroRightNeutralBase =
   checkEq zeroPlusZero zero
-
-expand :: Int -> Ar -> [Ar]
-expand n = Set.toList . satMany n catrw . Set.singleton . norm
 
 cid :: Ar
 cid = Fix (Comp [])
@@ -260,3 +295,21 @@ g2 =
 
 gg :: Ar
 gg = g1 .+ g2
+
+-- Example modules
+
+modBool :: Module
+modBool =
+  [ DefOb
+      "Bool"
+      ( Lim
+          Neg
+          ( Map.fromList
+              [ ("true", Lim Pos mempty),
+                ("false", Lim Pos mempty)
+              ]
+          )
+      ),
+    DefAr "not" (ObNamed "Bool") (ObNamed "Bool") cnot,
+    DefPf "notInvolution" (ObNamed "Bool") (ObNamed "Bool") notnot cid PfAuto
+  ]
