@@ -21,8 +21,7 @@ pointfree programming style. The language is still in development. The current j
 
 - Dhall just has expressions for everything. A "package" or "module" is simply an expression that (usually) returns a record of all the things "exported" by that package.
 - Dhall uses a lot of records, and has operators to make things nice. We should have the same operators probably.
-
-### Morte et al
+- Morte, etc.?
 
 ### Koka
 
@@ -38,7 +37,8 @@ Modules use `/` instead of `.`, like unix filesystem.
 
 ### Other materials
 
-- An interesting blog post about design choices in Rust: https://graydon2.dreamwidth.org/307291.html
+- An interesting blog post about design choices in Rust:
+  https://graydon2.dreamwidth.org/307291.html
 
 ## Booleans
 

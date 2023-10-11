@@ -156,7 +156,7 @@ Forest := (Fix(TreeForestF) .forest)({})
 Maybe there would be some way to automatically convert between things of type
 `{} -> A` and things of type `A`.
 
-## Functors
+## Lists
 
 How does this mix with functors?
 
@@ -268,7 +268,9 @@ To see how the typing works here, we can simplify this composition of functors:
 ```
   Nat NatListF
 =
-  Nat cone{ loop = . , in = Nat } ListF
+  Nat cone{ loop = . , in = cone{} Nat } ListF
+=
+  cone{ loop = Nat , in = Nat cone{} Nat } ListF
 =
   cone{ loop = Nat , in = Nat } ListF
 =
