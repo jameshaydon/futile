@@ -499,7 +499,7 @@ Language: Futile
 hljs.registerLanguage("futile",() => ({
   name: "Futile",
   keywords: {
-    keyword: 'def prop',
+    keyword: 'def with lim colim',
     litteral: 'distr'
   },
   contains: [

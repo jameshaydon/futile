@@ -59,6 +59,10 @@ Some of the design choices might be worth stealing: https://github.com/roc-lang/
 
 - An interesting blog post about design choices in Rust:
   https://graydon2.dreamwidth.org/307291.html
+- https://jackrusher.com/
+  lots of opinions on good programming style
+- Maybe Urbit has some nice ideas hidden in the junk: https://developers.urbit.org/guides/core/hoon-school
+- a new concatenative lang: https://compudanzas.net/uxn_tutorial.html
 
 ## Booleans
 
