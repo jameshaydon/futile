@@ -305,3 +305,133 @@ sum_alg :=
 sum : Nat List -> Nat
 sum := cata(sum_alg)
 ```
+
+## Recursive functions
+
+Not all recursive functions are "structural", that is, expressed as a
+catamorphism. So we also want to define general recursive functions.
+
+Let's look at very simple example, a recursively defined morphism `f : Nat ->
+Nat` that always returns zero:
+
+```futile
+dec : Nat -> Nat
+dec = unwrap cocone{ zero = cone{} zero. wrap, succ = }
+
+f : Nat -> Nat
+f = dec f
+```
+
+First let's try to prove that this is equal to `cone{} zero`:
+
+```
+  zero f 
+= zero dec f
+= zero unwrap cocone{ zero = cone{} zero. wrap, succ = }
+= zero. wrap unwrap cocone{ zero = cone{} zero. wrap, succ = }
+= zero. cocone{ zero = cone{} zero. wrap, succ = }
+= cone{} zero. wrap
+```
+
+and
+
+```
+  zero cone{} zero
+= cone{} zero
+= cone{} zero. wrap
+```
+
+hence `zero f = zero cone{} zero`
+
+And:
+
+```
+  inc f 
+= succ. wrap f
+= succ. wrap dec f
+= succ. wrap unwrap cocone{ zero = cone{} zero. wrap, succ = } f
+= succ. cocone{ zero = cone{} zero. wrap, succ = } f
+= f
+= cone{} zero
+```
+
+(_TODO:_ The last equality in this chain uses the property we are trying to
+prove. Make explicit why this is OK.)
+
+and
+
+```
+  inc cone{} zero
+= cone{} zero
+```
+
+hence `inc f = inc cone{} zero`.
+
+Then (using that `zero` and `inc` "cover" `Nat`), we conclude that `f = cone{}
+zero`.
+
+_TODO:_ improve this proof, going from the explicit coproduct instead.
+
+This proves that, if there is a morphism `f` that has the property `f = dec f`,
+then it is equal to `cone{} zero`.
+
+_How to interpret this morphism into a category?_
+
+Up till now we have been assuming the following interpretation model:
+- Interpret some base morphisms.
+- Know how to interpret combinators of morphisms if you know the interpretation of the morphisms. E.g., `I(f g) = I(f) I(g)`, and same for cones, cocones, etc.
+
+In other words, an interpretation was simply a functor, from the free category of the syntax, to the target category. A functor that preserves (co)limits, etc.
+
+How can we _functor_ `f`?
+
+```
+I(f) = I(dec f) = I(dec) I(f)
+```
+
+We know how to interpret `dec`, so the question is, can we solve the equation:
+```
+x = I(dec) x
+```
+in the target category?
+
+If we unroll the definition, we see that we are trying to define `f` as:
+```
+dec dec dec dec dec dec ...
+```
+but most categories don't permit infinite compositions. Another way of looking at it is that we are defining an infinite sequence:
+```
+undefined
+dec undefined
+dec dec undefined
+dec dec dec undefined
+dec dec dec dec undefined
+dec dec dec dec dec undefined
+dec dec dec dec dec dec undefined
+dec dec dec dec dec dec dec undefined
+dec dec dec dec dec dec dec dec undefined
+...
+```
+
+which, for all (finite) inputs of type `Nat`, one of these will return a defined
+value. So, if you have an order on the morphisms, you can ask for the limit of
+this sequence.
+
+---
+
+_Something something "knot tying":_ The way recursion works in functional
+programming languages like OCaml is that it first creates a pointer for the
+function that is defined to be `null`. Then it creates the closure object, with
+references to this null pointer, and finally it sets the pointer to that closure
+object. This sort of manipulation doesn't really look like what the "take a
+limit" procedure.
+
+
+_Something something "lazy":_ What enables the solution to exist is a certain
+laziness. Even in strict languages like OCaml, it's the fact that closures are
+values that just sit there and don't _do_ anything until they are invoked. So,
+they can be defined (as a null pointer) before they exhibit any bad behaviour,
+and can resolve any required "infinite" behaviour dynamically, at runtime.
+
+
+

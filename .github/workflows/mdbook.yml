@@ -48,6 +48,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
+          # For some reason we have to specify the path from the root here:
           path: ./futile/book
 
   # Deployment job

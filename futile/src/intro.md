@@ -25,15 +25,35 @@ pointfree programming style. The language is still in development. The current j
 
 ### Koka
 
-Modules use `/` instead of `.`, like unix filesystem.
+- Modules use `/` instead of `.`, like unix filesystem.
+- Doesn't need a GC.
 
 ### Unison
 
+Content-addressed storage for all definitions, solving many problems with
+dependencies, and some problems with distributed/cloud computing.
+
 ### Erlang / Elixir
 
-### Agda
+An amazing runtime.
 
 ### Frank
+
+- Frank: https://github.com/frank-lang/frank
+- Shonky: https://github.com/pigworker/shonky
+
+### Carp
+
+- Carp is a pretty high-level typed functional language (with sum-types and
+  polymorphism) that doesn't have a GC:
+  https://github.com/carp-lang/Carp/blob/master/docs/Memory.md
+- Emits C code.
+
+### Roc
+
+Potentially has nice stuff, not looked yet: https://www.roc-lang.org/
+
+Some of the design choices might be worth stealing: https://github.com/roc-lang/roc/blob/main/FAQ.md
 
 ### Other materials
 
