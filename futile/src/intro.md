@@ -55,6 +55,11 @@ Potentially has nice stuff, not looked yet: https://www.roc-lang.org/
 
 Some of the design choices might be worth stealing: https://github.com/roc-lang/roc/blob/main/FAQ.md
 
+### JQ
+
+Basically a pointfree language for transforming JSON.
+See also: https://www.youtube.com/watch?v=NcUJnmBqHTY
+
 ### Other materials
 
 - An interesting blog post about design choices in Rust:

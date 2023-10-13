@@ -23,7 +23,7 @@ A _local controller_ is a morphism of sheaves `S -> Dyn ⚬ G`.
 
 So this assigns, for each `n : N` of the network structure, a function `S(n) -> Dyn(G(n))`, in other words, a dynamics that is parametrised by a static structure on `n`.
 
-A _gobal controller_ is a morphism of sheaves `M × S -> Dyn ⚬ G`, so a function `M(n) × S(n) -> Dyn(G(n))` for all `n`, this is a dynamics that is parametrised not only on the obstacles, but also on the instance of the road segment `n`.
+A _gobal controller_ is a morphism of sheaves `M × S -> Dyn ⚬ G`, so a function `M(n) × S(n) -> Dyn(G(n))` for all `n`, this is a dynamics that is parametrised not only on the static structure, but also on the instance of the road segment `n`.
 
 _Note:_ These definitions are really just about specifying dynamics, controllers can be more general, for example they can stop given some condition and then use a different dynamics, etc. TODO: generalise to more general controllers.
  
@@ -53,6 +53,8 @@ Site `N`:
 - `G(Big)` is some open rectangular area of R^2 of width 5 and length 50.
 - `G(Med)` is some open rectangular area of R^2 of width 5 and length 40.
 - `G(Small)` is some open rectangular area of R^2 of width 5 and length 20.
+- `G(left)` is an embedding of `G(Med)` into the first 40 metres of `G(Big)`.
+- etc.
 
 `S` adds obstacles to the roads:
 - `S(Big)` is a finite set of points in `G(Big)`
