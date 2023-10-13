@@ -1,7 +1,5 @@
 # Sheaf of control
 
-I was scrolling through our slack-chat-log to find something you said about proving things about fixed-points, and came across the ODD via sheaves thing. It made me think about it, I think I have a minimal paper idea.
-
 We define the following:
 - A _network structure_ is a finite category `N` that is a _site_, that is, is equipped with a _coverage_.
 - A _geometry_ for the network structure is a morphism of sites `G : N -> A`, where `A` is some "geometric" category. We will always use some sub-category of the category of opens in `R^n` for some `n`.
