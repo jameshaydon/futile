@@ -11,6 +11,11 @@ pointfree programming style. The language is still in development. The current j
 
 ## Things I like from other languages
 
+### Haskell
+
+- Generic programming
+- https://wiki.haskell.org/Nitpicks
+
 ### OCaml
 
 - Functors: https://dev.realworldocaml.org/functors.html

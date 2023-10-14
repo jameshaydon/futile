@@ -484,8 +484,10 @@ f   ~> dec f ~> dec undefined
 
 and `F F A0` sends:
 ```
+    F        F            A0
 dec ~> dec   ~> dec       ~> dec
 f   ~> dec f ~> dec dec f ~> dec dec undefined
 ```
 
 so precomposing with `F` gets us a chain of increasingly accurate moprhisms. 
+
