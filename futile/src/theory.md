@@ -37,3 +37,7 @@ united](https://www.cambridge.org/core/services/aop-cambridge-core/content/view/
 - Many good papers: https://dblp.uni-trier.de/pid/d/DominiqueDuval.html
 
 - https://drops.dagstuhl.de/opus/volltexte/2019/11061/pdf/LIPIcs-ITP-2019-6.pdf
+
+- Taking categories seriously: https://www.emis.de/journals/TAC/reprints/articles/8/tr8.pdf
+
+- Paranatural Category Theory https://arxiv.org/abs/2307.09289

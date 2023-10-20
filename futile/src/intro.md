@@ -11,6 +11,10 @@ pointfree programming style. The language is still in development. The current j
 
 ## Things I like from other languages
 
+### Lean
+
+- macros: https://arxiv.org/pdf/2001.10490.pdf
+
 ### Haskell
 
 - Generic programming

@@ -11,4 +11,4 @@ checkModule mod = traverse_ checkDef mod
   where
     checkDef :: Def -> Check ()
     checkDef (DefOb name o) = _
-    checkDef (DefOb )
+    -- checkDef (DefOb )

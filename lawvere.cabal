@@ -88,7 +88,7 @@ library
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  Law.Core, Law.Expr, Law.Check, Law.Equality, MyLib
+    exposed-modules:  Law.Core, Law.Expr, Law.Equality, MyLib, Mergesort
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -110,6 +110,7 @@ library
                       hegg,
                       data-fix,
                       free,
+                      recursion-schemes,
                       pretty-simple
 
     mixins:           base hiding (Prelude),

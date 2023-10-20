@@ -491,3 +491,328 @@ f   ~> dec f ~> dec dec f ~> dec dec undefined
 
 so precomposing with `F` gets us a chain of increasingly accurate moprhisms. 
 
+From now on lets call `f` "countdown" instead.
+
+In this case the category `D` is quite simple:
+```futile
+def category Countdown := {
+  gen             *
+  gen dec       : * -> *
+  gen countdown : * -> *
+}
+```
+
+We can define the following functor `Countdown -> Countdown`:
+```
+{ dec = dec, countdown = dec countdown }
+```
+Then, given some category `C` where we have defined `Nat` and `dec : Nat -> Nat`, we can define a functor `Countdown -> C`:
+```
+{ * = Nat, dec = dec, countdown = undefined }
+```
+Note, as in [macros](macros.md), that with inference this would hopefully be reduced to:
+```
+{ dec = dec, countdown = undefined }
+```
+We are then searching for the recursive fixed point for this, say:
+```futile
+rec
+  { dec = dec, countdown = dec countdown }
+  { dec = dec, countdown = undefined }
+: Countdown -> C
+```
+for which we want to extract `countdown`, so:
+```
+interpret
+  countdown
+over rec
+  { dec = dec, countdown = dec countdown }
+  { dec = dec, countdown = undefined }
+```
+
+If we want to prove some property `P` about `countdown` then we have to do the following:
+- Prove `P` for `{ dec = dec, countdown = undefined }`
+- Prove that if `P` holds for `F` then it holds for `{ dec = dec, countdown = dec countdown } F`.
+
+## Equality as moprhisms
+
+Equality proofs are 2 morphisms. They can use colimit and limit constructions. Thus, you can prove equality from a coproduct by proving equality kn each summand. You can prove equality by proving equality for each projection, for morphosms to a product. Proofs have to terminate or they are meaningless, so they cannot be defined by recursion. Thus, for proofs about equality from recursive types, better to use the cata.
+
+---
+
+Wait, is it even `f = dec f` that we want? This is actually just a diverging function. What we want is:
+```futile
+f : Nat -> Nat
+f =
+  unwrap
+  cocone{
+    zero = zero. wrap,
+    succ = f
+  }
+```
+
+In this case for the functor approach we need a category which has:
+- limits and cones
+- colimits and cocones
+- wrap/unwrap for the recursive `Nat` type.
+
+Let's try to prove that if we take the fixed point, then
+```
+f == cone{} zero. wrap
+```
+We prove this by defining the equality as a 2-morphism:
+```
+f -> cone{} zero. wrap : Nat -> Nat
+```
+First we will precompose with `wrap`:
+```
+wrap f -> wrap cone{} zero. wrap : colim{ zero = lim{}, Nat } -> Nat
+```
+Because `wrap` is an iso, this will give us the required equality.
+Because the source here is a colimit, we can define such a 2-morphism via lifting a cocone:
+```
+lift_cocone{ zero = ?zero_case , succ = ?succ_case }
+```
+where:
+```
+zero_case : zero. wrap f -> zero. wrap cone{} zero. wrap : lim{} -> Nat
+succ_case : succ. wrap f -> succ. wrap cone{} zero. wrap : Nat   -> Nat
+```
+
+- Let's start with `zero_case`:
+  ```
+  zero. wrap f -> zero. wrap
+  ```
+  since we can simplify `zero. wrap cone{} zero. wrap` to `zero. wrap`.
+  We expand `f`:
+  ```
+  zero. wrap unwrap
+  cocone{
+    zero = zero. wrap,
+    succ = f
+  }
+  ->
+  zero.
+  cocone{
+    zero = zero. wrap,
+    succ = f
+  }
+  ->
+  zero. wrap
+  ```
+  Done.
+- Let's now do the `succ_case`:
+  ```
+  succ. wrap f -> succ. wrap cone{} zero. wrap
+  ```
+  Again we can simplfy:
+  ```
+  succ. wrap f -> cone{} zero. wrap
+  ```
+  We unwrap `f`:
+  ```
+  succ. wrap f
+  ->
+  succ. wrap
+  unwrap
+  cocone{
+    zero = zero. wrap,
+    succ = f
+  }
+  ->
+  succ.
+  cocone{
+    zero = zero. wrap,
+    succ = f
+  }
+  ->
+  f
+  -> [HERE WE ARE USING RECURSIVE EQUALITY]
+  cone{} zero. wrap
+  ```
+  Done.
+
+So, we get through, but we use the property itself, this is a cyclic proof.
+
+Is the cyclic proof valid?
+
+Reformulating as a fixed point induction doesn't work, because the base case is:
+```
+undefined -> cone{} zero. wrap
+```
+and these don't look equal, the LHS is totally undefined, the one of the right is totally defined.
+
+But that's if we only consider 2-morphisms are equality. What if we consider them to be inclusion of partial functions? So, in the domain, for `f,g: a -> b`, `f -> g` means that, for all `x`, `f(x) <= g(x)` inside `1 + b`, which means, `f(x) undefined` and `g(x)` anything, or `f(x) defined` and `g(x) defined` and `g(x) == f(x)`.
+
+Then can we do the fixed point induction? The property `P` we want to prove is:
+```
+f -> cone{} zero. wrap
+```
+
+- `undefined <= cone{} zero. wrap` ✓
+- Assume `g <= cone{} zero. wrap` for some `g` then we want to prove that:
+  ```
+  unwrap
+  cocone{
+    zero = zero. wrap,
+    succ = g
+  }
+  <=
+  cone{} zero. wrap
+  ```
+  To proceed by cases we need to precompose with `wrap`. But then we'd need to know that: `wrap u <= wrap v` implies `u <= v`. For this we'd need to use that `wrap`/`unwrap` are _total_? Anyways, let's assume this is all okay, so we want to prove:
+  ```
+  cocone{
+    zero = zero. wrap,
+    succ = g
+  }
+  <=
+  wrap cone{} zero. wrap
+  ```
+  and now we can proceed by cases.
+  
+  - We have the zero case:
+    ```
+    zero.
+    cocone{
+      zero = zero. wrap,
+      succ = g
+    }
+    <=
+    zero. wrap
+    <=
+    cone{} zero. wrap
+    ```
+  - And the `succ` case:
+    ```
+    succ.
+    cocone{
+      zero = zero. wrap,
+      succ = g
+    }
+    <=
+    g
+    <=
+    cone{} zero. wrap
+    ```
+    ✓
+
+What have we proved?
+```
+f <= cone{} zero. wrap
+```
+That is, _in as far as `f` is even defined_, it is equal to the constantly zero function.
+
+Proving that `f` is total, is another matter.
+
+## Hylomorphisms and other recursion schemes
+
+Another approach the language could take is to not allow definitions by general recursion. Instead, you must use specific recursion schemes, and conditions which ensure that they are well defined (terminate).
+- Catamorphisms always terminate
+- Hylomorphisms need the co-algebra to be _recursive_.
+
+Let's look at `mergesort`.
+
+The functor is:
+```haskell
+data TreeF a r = Empty | Leaf a | Node r r 
+```
+
+The algebra part:
+```haskell
+combine Empty = []
+combine (Leaf x) = [x]
+combine (Node l r) = merge l r
+```
+
+The coalgebra part:
+```haskell
+split []  = Empty
+split [x] = Leaf x
+split xs  = Node l r where
+  (l, r) = splitAt (length xs `div` 2) xs
+```
+Is this coalgebra recursive? This would mean that for any algebra `TreeF a x -> x`, then is a unique coalgebra-to-algebra morphism `[a] -> x`. _On Well-Founded and Recursive Coalgebras_ paper gives the condition:
+
+Existence of a homomorphism of `split` to `(μ (TreeF a), μ (TreeF a) -> TreeF a (μ (TreeF a)))`. This means, a morphism:
+```
+f : [a] -> μ (TreeF a)
+```
+such that DIAG.
+
+What is `μ (TreeF a)`? It is (isomorphic to):
+```
+data Tree a = Empty | Leaf a | Node (Tree a) (Tree a) 
+```
+So it is binary trees (that can be empty) with `a` at the leaves. So in this case:
+```haskell
+f :: [a] -> Tree a
+f []  = Empty
+f [x] = Leaf x
+f xs  = Node (f l) (f r)
+  where
+    (l, r) = split xs
+```
+Is `f : [a] -> Tree a` a homomorphism from `split`?
+```
+[a] --split--> TreeF a [a]
+ |              |
+ f              TreeF(f)
+ |              |
+ v              v
+ Tree a -----> TreeF a (Tree a)
+```
+yes.
+
+Note that this `f` is _not_ the anamorphism for `split`, which target `ν (TreeF a)` (nu). So we have to understand `data Tree` as the _finite_ haskell trees.
+
+Can we define `f` via a cata?
+
+Here is an alternative. We define tilted trees:
+```haskell
+data TiltedF a r
+  = Empty
+  | Leaf a
+  | TiltLeft  r r
+  | TiltRight r r
+```
+then, given a tilted tree, we can insert a new element into it:
+```haskell
+insert :: a -> Tilted a -> Tilted a
+insert x Empty = Leaf x
+insert x (Leaf y) = TiltLeft (Leaf x) (Leaf y)
+insert x (TiltLeft  left right) = TiltRight (insert x left) right
+insert x (TiltRight left right) = TiltLeft  left            (insert x right)
+```
+
+`foldr insert Empty xs` then turns a list into a tilted tree. This is total as long as `insert` is. But `insert` is a cata? I.e. it is defined by an algebra on `(Maybe a -> Tilted a)`:
+```haskell
+alg :: TiltedF a (Maybe a -> Tilted a) -> (Maybe a -> Tilted a)
+alg t Nothing = t
+alg Empty (Just x) = Leaf x
+alg (Leaf y) (Just x) = TiltLeft (Leaf x) (Leaf y)
+alg (TiltLeft  left right) (Just x) = TiltRight (left (Just x)) (right Nothing)
+alg (TiltRight left right) (Just x) = TiltLeft  (left Nothing)  (right (Just x))
+```
+Can we define:
+```haskell
+foo :: [a] -> TiltedF a [a]
+foo [] = Empty
+foo [x] = Leaf x
+foo xs =
+    if even (length xs)
+      then TiltLeft l r
+      else TiltRight l r
+  where
+    (l, r) = split xs
+```
+This doesn't correspond to how we split it before.
+
+See [Mergesort](mergesort.md) chapter.
+
+## References
+
+- [A Practical Fixed Point
+Combinator for Type Theory](https://www.chargueraud.org/research/2009/fixwf/fixwf.pdf)
+- How to prove that merge-sort terminates: https://softwarefoundations.cis.upenn.edu/current/vfa-current/Merge.html
+- https://hackage.haskell.org/package/recursion-schemes-5.2.2.5
