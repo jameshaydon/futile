@@ -11,6 +11,8 @@ pointfree programming style. The language is still in development. The current j
 
 ## Things I like from other languages
 
+https://scopes.readthedocs.io/en/latest/about/
+
 ### Lean
 
 - macros: https://arxiv.org/pdf/2001.10490.pdf

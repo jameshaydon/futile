@@ -499,7 +499,7 @@ Language: Futile
 hljs.registerLanguage("futile",() => ({
   name: "Futile",
   keywords: {
-    keyword: 'def with lim colim cone cocone hylo if then else',
+    keyword: 'def with lim colim cone cocone hylo if then else case as',
     litteral: 'distr'
   },
   contains: [

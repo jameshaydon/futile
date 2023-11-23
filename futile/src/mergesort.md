@@ -1,30 +1,142 @@
 # Mergesort
 
+## List reminder
+
 ```futile
 // a bifunctor
 def ListF :=
   colim{
     empty = lim{},
-    cons  = lim{ head = .elem, tail = .rec }
+    cons  = lim{ hd = .elem, tl = .rec }
   }
 
 // a functor
 def List := Fix(ListF)
 
-// a bifunctor
-def TreeF :=
-  colim{
-    empty = lim{},
-    leaf  = .elem,
-    node  = lim{ left = .rec, right .rec } 
+def empty : {} -> List :=
+  empty. wrap
+
+def cons : { hd = , tl = List } -> List :=
+  cons. wrap
+
+def single : -> List :=
+  { hd = , tl = empty } cons
+```
+
+## Split a list in two
+
+```futile
+def Pair := lim( , )
+
+def Distr :=
+  colim{ done  = .elem List Pair
+         distr = lim{ x = .elem, y = .elem, rest = .rec } 
   }
 
-// a functor
-def Tree := Fix(TreeF)
+def halve : List -> List Pair := hylo distr poptwo
+
+def distr : { elem = , rec = List LeftRight } Distr -> List Pair :=
+  [ done  = ,
+    distr = ( .x :: .rest.l, .y :: .rest.r ) ]
+
+def poptwo : List -> {elem = , rec = List} Distr :=
+  unwrap
+  [ empty = (empty, empty) done.,
+    cons  = .tl(unwrap) @tl
+            [ empty = (.hd single, empty) done.,
+              cons  = { x    = .hd,
+                        y    = .tl.hd,
+                        rest = .tl.tl } distr.
+            ]
+  ]
+```
+
+Note we use:
+```
+x :: xs
+```
+as notation for `{ hd = x, tl = xs } cons`.
+
+## Merge two sorted lists
+
+Here we specialise to `Nat` lists until we figure out how to handle the `Ord` typeclass.
+```futile
+def Merge := 
+  colim{ done = Nat List,
+         cons = lim{ hd = Nat List,
+                     tl = }}
+
+def rebuild : Nat List Merge -> Nat List
+  := [ done = , cons = cons ]
+
+def choose : Nat List Pair -> Nat List Pair Merge :=
+  .1(unwrap) .2(unwrap) @1
+  [ empty = .2 cons done.,
+    cons  = @2
+            [ empty = .1 cons done.,
+              cons  = ( if .1.hd < .2.hd
+                        then { hd = .1.hs, tl = (.1.tl, .2 cons )}
+                        else { hd = .2.hs, tl = (.1 cons, .2.tl )}
+                      ) cons.
+            ]
+  ]
+```
+
+## Finally mergesort
+
+```futile
+// a bifunctor
+def TreeF :=
+  [ empty  = {},
+    single = .elem,
+    merge  = .rec Pair ]
 ```
 We want to define `mergesort` as a hylo, so we have to give an algebra and a co-algebra for `TreeF`.
 
-Algebra:
+```futile
+def combine : { elem = , rec = List } TreeF -> List :=
+  [ empty  = empty,
+    single = single,
+    split  = merge ] // note here we are ignoring the `Ord` problem.
+
+def split : List -> {elem = , rec = List } TreeF :=
+  { l = , l_ = unwrap }
+  @l_
+  [ empty = {} empty.,
+    cons  = { x = .l_.hd, xs = .l_ .tl unwrap, l }
+            @xs
+            [ empty = .x single.,
+              cons  = .l halve merge. ]
+  ]
+  
+def sort : List -> List := hylo combine split
+```
+
+## Orders
+
+How to deal with orders? Can we define a category of orders? A category has orders for all objects if there is a natural transformation from
+```
+A |-> lim(A, A)
+```
+to
+```
+A |-> Bool = [ true = {}, false = {} ]
+```
+
+We defined
+```
+def sort : List -> List
+```
+as a natural transformation between `List` and itself.
+
+
+
+---
+
+## Old stuff (don't read)
+
+### Algebra
+
 ```futile
 // This algebra is polymorphic, so it's also a natural transformation.
 // List : C -> C
@@ -92,7 +204,18 @@ def merge := hylo rebuild choose
 
 def rebuild := cocone{ done = , cons = cons }
 
-def choose : Nat lim{ left = List, right = List } -> Nat List :=
+def MergeSortedF := 
+  colim{ done = Nat List,
+         cons = lim{ hd = .elem List,
+                     tl = .rec }}
+
+def LeftRight := lim{ left = List, right = List }
+
+// polymorphic version would be:
+// LeftRight -> { elem = , rec = LeftRight } MergeSortedF
+def choose :
+  Nat LeftRight -> { elem = Nat, rec = Nat LeftRight } MergeSortedF
+  :=
   cone{ leftu  = .left  unwrap,
         rightu = .right unwrap,
         left, right
@@ -149,42 +272,107 @@ def pickLeast :=
    else cone{ head = .y, tail = cone(.xxs,  .ys) })
 ```
 
-Note that "bindings" need to be defined by projection, rather than by "pattern-matching" or "destructuring". Mainly we'd like to bind `x` and `xs` in one go somehow, from `l_`. Say:
+Note that "bindings" need to be defined by projection, rather than by "pattern-matching" or "destructuring". Mainly we'd like to bind `x` and `xs` in one go somehow from `l_`. Say:
 ```futile
 cone{
   { head = x, tail = xs } = .l_,
   { head = y, tail = ys } = .r_
 }
 ```
-if we had used tuples in the definition of `List`:
+
+What is the meaning? Well, let's assume there is a flattening operation `/\` (from dhall), then you can:
 ```futile
-cone{
-  (x, xs) = .l_,
-  (y, ys) = .r_
-}
+.l_ cone{ x = .head, xs = .tail } /\ .r_ cone{ y = .head, ys = .tail }
 ```
-the idea here is that if the LHS of an `=` is not a label, then it must be a pattern.
+Not a huge leap to:
 ```futile
 cone{
-  x :< xs = .l_,
-  y :< ys = .r_,
-  // ...
+  .l_ { x = .head, xs = .tail },
+  .r_ { y = .head, ys = .tail }
 }
 ```
 
-This means you've defined some sort of "pattern" `:<`:
-```futile
-head :< tail
-```
+---
 
-Coalgebra:
-This is the function which splits a list. How de we define this with a cata? We want to use an accumator (a pair of lists) and add elements to the left or right one in alternation:
+The above patterns are basically for handling "nested products", because we are dealing with a product with a component `l_` which itself points to a product, and we want to explode that out into a flattened product.
+
+What about coproducts? E.g. if we have
+```futile
+colim{ a = colim{u = ?, v = ?}, b = ? } --> ?
+```
+Then we might define a morphism as:
 ```futile
 cocone{
-  empty = cone{ left = emptyList, right = emptyList },
-  cons  = cone{ left  = { head = .head, tail = .tail.right } cons,
-                right = .tail.left }
+  a = cocone{
+    u = ?,
+    v = ?
+  },
+  b = ?
 }
+```
+but what about
+```futile
+cocone{
+  a u = ?,
+  b v = ?,
+  b   = ?
+}
+```
+
+---
+
+There is another way to define `choose` maybe:
+(for now, let's elide the `unwrap` calls:)
+```futile
+def choose : Nat lim{ left = List, right = List } -> Nat List :=
+  @{left,right} // distribute on several sum components of a product
+  cocone{
+    empty.empty = cone{} empty done.,
+    empty.cons  = .r cons done.,
+    cons.empty  = .l cons done.,
+    cons.cons   = pickLeast cons.
+  }
+```
+this has effectively split up the analysis into 4 cases.
+
+```futile
+def choose :
+  Nat LeftRight -> { elem = Nat, rec = Nat LeftRight } MergeSortedF
+  :=
+  .l(unwrap) .r(unwrap) @l
+  [ empty = .r cons done.,
+    cons  = @r
+            [ empty = .l cons done.,
+              cons  = ( if .l.hd < .r.hd
+                        then { hd = .l.hs, tl = {l = .l.tl, r = .r cons }}
+                        else { hd = .r.hs, tl = {l = .l cons, r = .r.tl }}
+                      ) cons.
+            ]
+  ]
+```
+
+---
+
+## Coalgebra
+
+This is the function which splits a list. How de we define this with a cata? We want to use an accumator (a pair of lists) and add elements to the left or right one in alternation:
+```futile
+TreeF = colim{
+    empty  = lim{},
+    single = Nat,
+    split  = lim{ l = , r = }
+  }
+
+def split : Nat List -> Nat List TreeF 
+:=
+  unwrap
+  [ empty = empty.,
+    cons  = @tl
+            [ empty = .hd single.,
+              cons  = 
+            ]
+  ]
+  
 ```
 we could have not swapped them and used a bool instead:
 ```futile
@@ -199,3 +387,5 @@ cocone{
 ```
 
 _TODO:_ note this distributes on a nested product. We haven't defined this formally.
+
+
