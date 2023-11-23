@@ -46,6 +46,7 @@ resp :=
   wait(state > 0);
   emit(Trigger);
   wait(dist < dRSS + 1);
+  emit(Untrigger);
   resp;
 
 sv :=
