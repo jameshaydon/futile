@@ -47,11 +47,11 @@ type Car = { x: R, v: R };
 type CarControl = { a_lower: R, a_upper: R };
 
 prog resp =
-  wait d > dRSS;
+  wait d > dRSS + ε;
   upd  ρ * rand;
   wait state > 0;
   emit Trigger;
-  wait dist < dRSS + 1;
+  wait dist < dRSS + 2ε;
   emit Untrigger;
   resp;
  where
@@ -119,6 +119,7 @@ sys SingleLaneFollow =
           input = { sv = sv.out,
                     pov = pov.out }
         }
-    }
+    },
+    outMap = unit
   }
 ```
