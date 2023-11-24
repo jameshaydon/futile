@@ -40,30 +40,81 @@ Several open systems can be put into parallel composition to create a new open s
 
 In the case of RSS single-lane-follow, the programs are:
 ```
-resp :=
-  wait(dist > dRSS);
-  upd(ρ * rand);
-  wait(state > 0);
-  emit(Trigger);
-  wait(dist < dRSS + 1);
-  emit(Untrigger);
+constant ρ;
+
+type Car = { x: R, v: R };
+
+type CarControl = { a_lower: R, a_upper: R };
+
+prog resp =
+  wait d > dRSS;
+  upd  ρ * rand;
+  wait state > 0;
+  emit Trigger;
+  wait dist < dRSS + 1;
+  emit Untrigger;
   resp;
+ where
+  d    = abs(in.pov.x - in.sv.x)
+  dRSS = rssDistance(in.pov.v, in.sv.v)
 
-sv :=
-  wait(Trigger);
-  upd({ a_lower = a_min, a_upper = a_min});
-  wait(Untrigger || state.v > 0);
-  if (state.v <= 0 )
-  then upd({ a_lower = 0, a_upper = 0});
-       wait(Untrigger);
-       sv
-  else sv
+sys Resp =
+  { phys   = R,
+    cyber  = R,
+    in     = { sv: Car, pov: Car },
+    out    = Unit,
+    outMap = unit,
+    prog   = resp,
+    dyn    = 1
+  }
 
-pov := wait(true);
-```
-Both `sv` and `pov` have internal physical state `Car := { x: R, v: R }`. It's possible to refer to output state using "dot" notation. For example:
-```
-dist := abs(sv.x - pov.x)
+prog sv =
+  wait Trigger;
+  upd { a_lower = a_min, a_upper = a_min };
+  wait Untrigger || state.v > 0;
+  if state.v <= 0 
+    then upd { a_lower = 0, a_upper = 0 };
+         wait Untrigger;
+         sv
+    else sv
 
-dRSS := rssDistance(pov.v, sv.v)
+sys SV =
+  { phys   = Car,
+    cyber  = CarControl,
+    in     = Unit,
+    out    = Car,
+    outMap = phys,
+    prog   = sv,
+    dyn    = { x = v, v in [cyber.a_lower, cyber.a_upper] }
+  }
+
+// TODO: this program doesn't guarantee min/max speeds for POV.
+pov = wait true;
+
+sys POV =
+  { phys   = Car,
+    cyber  = CarControl,
+    in     = Unit,
+    out    = Car,
+    outMap = phys,
+    prog   = pov,
+    dyn    = { x = v, v in [cyber.a_lower, cyber.a_upper] }
+  }
+
+sys SingleLaneFollow =
+  parallel{
+    in  = Unit,
+    out = Unit,
+    components = {
+      sv = { component = SV,
+             input = unit
+           },
+      pov = { component = POV,
+              input = unit,
+            },
+      resp = { component = Resp,
+               input = { sv = sv.out,
+                         pov = pov.out }}
+    }
+  }
 ```
