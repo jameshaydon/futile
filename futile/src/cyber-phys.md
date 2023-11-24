@@ -106,15 +106,19 @@ sys SingleLaneFollow =
     in  = Unit,
     out = Unit,
     components = {
-      sv = { component = SV,
-             input = unit
-           },
-      pov = { component = POV,
-              input = unit,
-            },
-      resp = { component = Resp,
-               input = { sv = sv.out,
-                         pov = pov.out }}
+      sv =
+        { component = SV,
+          input = unit
+        },
+      pov =
+        { component = POV,
+          input = unit,
+        },
+      resp =
+        { component = Resp,
+          input = { sv = sv.out,
+                    pov = pov.out }
+        }
     }
   }
 ```
